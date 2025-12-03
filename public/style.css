@@ -392,9 +392,21 @@ body {
     align-items: flex-end;
 }
 
-/* Copy button */
-.copy-btn {
+/* Message actions container */
+.message-actions {
+    display: flex;
+    gap: 8px;
     margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+/* Action buttons (copy, edit) */
+.action-btn {
     padding: 6px 12px;
     background: var(--stats-bg);
     color: var(--stats-text);
@@ -403,18 +415,89 @@ body {
     font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    opacity: 0.7;
 }
 
-.copy-btn:hover {
-    opacity: 1;
+.action-btn:hover {
     transform: scale(1.05);
+    filter: brightness(1.1);
 }
 
 .copy-btn.copied {
     background: #10b981;
     color: white;
-    opacity: 1;
+}
+
+/* Edit button specific */
+.edit-btn {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.edit-btn:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+/* Edit container */
+.edit-container {
+    width: 100%;
+}
+
+.edit-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    max-height: 300px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    line-height: 1.5;
+}
+
+.edit-textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-end;
+}
+
+.edit-save-btn, .edit-cancel-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-save-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.edit-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.edit-cancel-btn {
+    background: var(--stats-bg);
+    color: var(--assistant-msg-text);
+}
+
+.edit-cancel-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
 }
 
 .usage-stats {

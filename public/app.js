@@ -448,11 +448,16 @@ function stopRequest() {
 }
 
 // Create message element
-function createMessageElement(role, content) {
+function createMessageElement(role, content, messageIndex = null) {
     const chatContainer = document.getElementById('chatContainer');
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
+    
+    // Store the message index for edit functionality
+    if (messageIndex !== null) {
+        messageDiv.dataset.messageIndex = messageIndex;
+    }
     
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
@@ -467,10 +472,24 @@ function createMessageElement(role, content) {
     
     contentWrapper.appendChild(contentDiv);
     
+    // Add action buttons
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'message-actions';
+    
+    // Add edit button for user messages
+    if (role === 'user') {
+        const editBtn = createEditButton(messageDiv, content);
+        actionsDiv.appendChild(editBtn);
+    }
+    
     // Add copy button for assistant messages
     if (role === 'assistant' && content) {
         const copyBtn = createCopyButton(content);
-        contentWrapper.appendChild(copyBtn);
+        actionsDiv.appendChild(copyBtn);
+    }
+    
+    if (actionsDiv.children.length > 0) {
+        contentWrapper.appendChild(actionsDiv);
     }
     
     messageDiv.appendChild(avatar);
@@ -485,7 +504,7 @@ function createMessageElement(role, content) {
 // Create copy button for messages
 function createCopyButton(content) {
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
+    copyBtn.className = 'copy-btn action-btn';
     copyBtn.innerHTML = '📋 Copy';
     copyBtn.title = 'Copy response to clipboard';
     copyBtn.onclick = async () => {
@@ -508,9 +527,122 @@ function createCopyButton(content) {
     return copyBtn;
 }
 
+// Create edit button for user messages
+function createEditButton(messageDiv, originalContent) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn action-btn';
+    editBtn.innerHTML = '✏️ Edit';
+    editBtn.title = 'Edit and resubmit this message';
+    editBtn.onclick = () => startEditMessage(messageDiv, originalContent);
+    return editBtn;
+}
+
+// Start editing a message
+function startEditMessage(messageDiv, originalContent) {
+    const contentDiv = messageDiv.querySelector('.message-content');
+    const actionsDiv = messageDiv.querySelector('.message-actions');
+    
+    // Store original content for cancel
+    messageDiv.dataset.originalContent = originalContent;
+    
+    // Hide actions during edit
+    if (actionsDiv) actionsDiv.style.display = 'none';
+    
+    // Replace content with textarea
+    const editContainer = document.createElement('div');
+    editContainer.className = 'edit-container';
+    
+    const textarea = document.createElement('textarea');
+    textarea.className = 'edit-textarea';
+    textarea.value = originalContent;
+    textarea.rows = Math.min(10, originalContent.split('\n').length + 1);
+    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'edit-buttons';
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'edit-save-btn';
+    saveBtn.innerHTML = '✓ Save & Resubmit';
+    saveBtn.onclick = () => saveEditAndResubmit(messageDiv, textarea.value);
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'edit-cancel-btn';
+    cancelBtn.innerHTML = '✕ Cancel';
+    cancelBtn.onclick = () => cancelEdit(messageDiv);
+    
+    buttonContainer.appendChild(saveBtn);
+    buttonContainer.appendChild(cancelBtn);
+    
+    editContainer.appendChild(textarea);
+    editContainer.appendChild(buttonContainer);
+    
+    // Replace content
+    contentDiv.innerHTML = '';
+    contentDiv.appendChild(editContainer);
+    
+    // Focus textarea
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+// Cancel editing
+function cancelEdit(messageDiv) {
+    const contentDiv = messageDiv.querySelector('.message-content');
+    const actionsDiv = messageDiv.querySelector('.message-actions');
+    const originalContent = messageDiv.dataset.originalContent;
+    
+    // Restore original content
+    contentDiv.innerHTML = formatMessage(originalContent);
+    
+    // Show actions again
+    if (actionsDiv) actionsDiv.style.display = 'flex';
+    
+    delete messageDiv.dataset.originalContent;
+}
+
+// Save edit and resubmit (branch conversation)
+function saveEditAndResubmit(messageDiv, newContent) {
+    const messageIndex = parseInt(messageDiv.dataset.messageIndex);
+    
+    if (isNaN(messageIndex)) {
+        console.error('Could not find message index');
+        cancelEdit(messageDiv);
+        return;
+    }
+    
+    // Trim content
+    newContent = newContent.trim();
+    if (!newContent) {
+        alert('Message cannot be empty');
+        return;
+    }
+    
+    // Branch conversation: keep history up to (but not including) this message
+    conversationHistory = conversationHistory.slice(0, messageIndex);
+    
+    // Remove all messages from this point onwards in the UI
+    const chatContainer = document.getElementById('chatContainer');
+    const allMessages = chatContainer.querySelectorAll('.message');
+    
+    for (let i = allMessages.length - 1; i >= 0; i--) {
+        const idx = parseInt(allMessages[i].dataset.messageIndex);
+        if (!isNaN(idx) && idx >= messageIndex) {
+            allMessages[i].remove();
+        }
+    }
+    
+    // Now send the new message
+    document.getElementById('messageInput').value = newContent;
+    sendMessage();
+}
+
 // Add message to chat
 function addMessage(role, content) {
-    createMessageElement(role, content);
+    // Calculate the index this message will have in conversationHistory
+    // For user messages, it's the current length (before adding)
+    // For assistant messages, it's current length (the user message was just added)
+    const messageIndex = conversationHistory.length;
+    createMessageElement(role, content, messageIndex);
 }
 
 // Add error message
@@ -606,8 +738,8 @@ function loadConversationHistory() {
                     welcomeMessage.style.display = 'none';
                 }
                 
-                conversationHistory.forEach(msg => {
-                    addMessage(msg.role, msg.content);
+                conversationHistory.forEach((msg, index) => {
+                    createMessageElement(msg.role, msg.content, index);
                 });
             }
         }
