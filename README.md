@@ -153,23 +153,11 @@ stringData:
 
 ## 🔐 Cloudflare Tunnel & Access
 
-### Setup Cloudflare Tunnel
+Securely expose your application without opening ports using Cloudflare Tunnel.
 
-Securely expose your application without opening ports:
+### 1. Update Tunnel Configuration
 
-```bash
-./setup-cloudflare-tunnel.sh
-```
-
-This will:
-- Add a route to your Cloudflare Tunnel
-- Create a DNS record
-- Set up Cloudflare Access authentication
-- Configure email-based access policy
-
-### Manual Setup
-
-1. **Update tunnel configuration**
+Add to your cloudflared config:
 
 ```yaml
 ingress:
@@ -177,16 +165,23 @@ ingress:
     service: http://vergeos-ai.vergeos-ai.svc.cluster.local:3001
 ```
 
-2. **Create DNS record**
+### 2. Create DNS Record
 
-```bash
-# CNAME record
+Create a CNAME record pointing to your tunnel:
+
+```
 ai.yourdomain.com -> your-tunnel-id.cfargotunnel.com
 ```
 
-3. **Configure Cloudflare Access**
+### 3. Configure Cloudflare Access (Optional)
 
-See `CLOUDFLARE-TUNNEL-SETUP.md` for detailed instructions.
+To require authentication:
+
+1. Go to Cloudflare Zero Trust Dashboard
+2. Access → Applications → Add an application
+3. Select "Self-hosted" and enter your hostname
+4. Create an access policy (e.g., allow specific emails)
+5. Save and test access
 
 ## 📁 Project Structure
 
@@ -200,7 +195,6 @@ vergeos-ai-interface/
 │   └── app.js                # Frontend JavaScript
 ├── k8s-deployment.yaml       # Kubernetes manifests
 ├── deploy.sh                 # Deployment automation
-├── setup-cloudflare-tunnel.sh # Cloudflare setup
 ├── package.json              # Node.js dependencies
 ├── .env.example              # Environment template
 └── README.md                 # This file
