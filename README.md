@@ -60,7 +60,7 @@ This project provides a modern web interface for VergeOS's new AI capabilities (
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/vergeos-ai-interface.git
+git clone https://github.com/dvvincent/vergeos-ai-interface.git
 cd vergeos-ai-interface
 ```
 
