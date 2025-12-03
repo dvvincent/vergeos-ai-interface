@@ -1,0 +1,35 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Kubernetes generated files
+k8s-public-configmap.yaml
+
+# Backup files
+*.bak
+*.backup

@@ -1,0 +1,289 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vergeos-ai
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vergeos-ai-config
+  namespace: vergeos-ai
+type: Opaque
+stringData:
+  VERGEOS_BASE_URL: "https://192.168.1.111/v1"
+  VERGEOS_API_KEY: "tLZ-nMETiunOeTK-_upVrSwMZp0L7DUhoaTYNBwFLeU"
+  VERGEOS_MODEL: "SmolM3"
+  PORT: "3001"
+  NODE_ENV: "production"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vergeos-ai-server
+  namespace: vergeos-ai
+data:
+  index.js: |
+    const express = require('express');
+    const cors = require('cors');
+    const { OpenAI } = require('openai');
+    const path = require('path');
+    const https = require('https');
+
+    const app = express();
+    const PORT = process.env.PORT || 3001;
+
+    // Middleware
+    app.use(cors());
+    app.use(express.json());
+    
+    const publicPath = path.resolve('/app/public');
+    console.log('Serving static files from:', publicPath);
+    app.use(express.static(publicPath));
+
+    // Initialize OpenAI client with VergeOS endpoint
+    const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+    const client = new OpenAI({
+        baseURL: process.env.VERGEOS_BASE_URL,
+        apiKey: process.env.VERGEOS_API_KEY,
+        httpAgent: httpsAgent,
+        httpsAgent: httpsAgent
+    });
+
+    const MODEL = process.env.VERGEOS_MODEL || 'qwen3-coder-14B';
+
+    // Health check endpoint
+    app.get('/api/health', (req, res) => {
+        res.json({ 
+            status: 'ok', 
+            vergeosUrl: process.env.VERGEOS_BASE_URL,
+            model: MODEL
+        });
+    });
+
+    // Chat endpoint - regular response
+    app.post('/api/chat', async (req, res) => {
+        try {
+            const { messages } = req.body;
+
+            if (!messages || !Array.isArray(messages)) {
+                return res.status(400).json({ error: 'Messages array is required' });
+            }
+
+            console.log(`[${new Date().toISOString()}] Chat request with ${messages.length} messages`);
+
+            const response = await client.chat.completions.create({
+                model: MODEL,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 2000
+            });
+
+            console.log(`[${new Date().toISOString()}] Response received`);
+
+            res.json({
+                message: response.choices[0].message.content,
+                usage: response.usage
+            });
+
+        } catch (error) {
+            console.error('Chat error:', error);
+            res.status(500).json({ 
+                error: 'Failed to get response from VergeOS AI',
+                details: error.message 
+            });
+        }
+    });
+
+    // Chat endpoint - streaming response
+    app.post('/api/chat/stream', async (req, res) => {
+        try {
+            const { messages } = req.body;
+
+            if (!messages || !Array.isArray(messages)) {
+                return res.status(400).json({ error: 'Messages array is required' });
+            }
+
+            console.log(`[${new Date().toISOString()}] Streaming chat request with ${messages.length} messages`);
+
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            const stream = await client.chat.completions.create({
+                model: MODEL,
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 2000,
+                stream: true
+            });
+
+            for await (const chunk of stream) {
+                const content = chunk.choices[0]?.delta?.content || '';
+                if (content) {
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                }
+            }
+
+            res.write('data: [DONE]\n\n');
+            res.end();
+
+        } catch (error) {
+            console.error('Streaming error:', error);
+            res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+            res.end();
+        }
+    });
+
+    // Get available models
+    app.get('/api/models', async (req, res) => {
+        try {
+            const models = await client.models.list();
+            res.json(models);
+        } catch (error) {
+            console.error('Models error:', error);
+            res.json({ 
+                data: [{ id: MODEL, object: 'model' }] 
+            });
+        }
+    });
+
+    // Start server
+    app.listen(PORT, () => {
+        console.log('===========================================');
+        console.log('VergeOS AI Interface Server');
+        console.log('===========================================');
+        console.log(`Server running on: http://localhost:${PORT}`);
+        console.log(`VergeOS endpoint: ${process.env.VERGEOS_BASE_URL}`);
+        console.log(`Model: ${MODEL}`);
+        console.log('===========================================');
+    });
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vergeos-ai
+  namespace: vergeos-ai
+  labels:
+    app: vergeos-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vergeos-ai
+  template:
+    metadata:
+      labels:
+        app: vergeos-ai
+    spec:
+      containers:
+      - name: vergeos-ai
+        image: node:18-alpine
+        ports:
+        - containerPort: 3001
+          name: http
+        env:
+        - name: VERGEOS_BASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: vergeos-ai-config
+              key: VERGEOS_BASE_URL
+        - name: VERGEOS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: vergeos-ai-config
+              key: VERGEOS_API_KEY
+        - name: VERGEOS_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: vergeos-ai-config
+              key: VERGEOS_MODEL
+        - name: PORT
+          valueFrom:
+            secretKeyRef:
+              name: vergeos-ai-config
+              key: PORT
+        - name: NODE_ENV
+          valueFrom:
+            secretKeyRef:
+              name: vergeos-ai-config
+              key: NODE_ENV
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          value: "0"
+        command:
+        - sh
+        - -c
+        - |
+          cd /app
+          npm install express cors openai dotenv
+          node server/index.js
+        volumeMounts:
+        - name: server-code
+          mountPath: /app/server
+        - name: public-files
+          mountPath: /app/public
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: server-code
+        configMap:
+          name: vergeos-ai-server
+      - name: public-files
+        configMap:
+          name: vergeos-ai-public
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vergeos-ai
+  namespace: vergeos-ai
+  labels:
+    app: vergeos-ai
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3001
+    targetPort: 3001
+    protocol: TCP
+    name: http
+  selector:
+    app: vergeos-ai
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vergeos-ai
+  namespace: vergeos-ai
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`vergeos-ai.happynoises.work`)
+      kind: Rule
+      services:
+        - name: vergeos-ai
+          port: 3001
+  tls:
+    secretName: happynoises-wildcard-tls
