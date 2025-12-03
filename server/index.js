@@ -192,10 +192,13 @@ app.get('/api/models', async (req, res) => {
         // If no models passed health check, return all models (better than empty)
         const modelsToReturn = onlineModels.length > 0 ? onlineModels : allModels;
         
-        // Update cache only if we have results
-        if (onlineModels.length > 0) {
+        // Only cache if ALL models passed health check (avoid caching partial results)
+        if (onlineModels.length === allModels.length) {
             onlineModelsCache = onlineModels;
             cacheTimestamp = Date.now();
+            console.log(`[${new Date().toISOString()}] Cached ${onlineModels.length} models (all passed)`);
+        } else {
+            console.log(`[${new Date().toISOString()}] Not caching: ${onlineModels.length}/${allModels.length} passed`);
         }
         
         console.log(`[${new Date().toISOString()}] Online models: ${onlineModels.length}/${allModels.length}`, onlineModels.map(m => m.id));

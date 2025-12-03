@@ -60,7 +60,7 @@ This project provides a modern web interface for VergeOS's new AI capabilities (
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/dvvincent/vergeos-ai-interface.git
+git clone https://github.com/yourusername/vergeos-ai-interface.git
 cd vergeos-ai-interface
 ```
 
@@ -153,11 +153,23 @@ stringData:
 
 ## 🔐 Cloudflare Tunnel & Access
 
-Securely expose your application without opening ports using Cloudflare Tunnel.
+### Setup Cloudflare Tunnel
 
-### 1. Update Tunnel Configuration
+Securely expose your application without opening ports:
 
-Add to your cloudflared config:
+```bash
+./setup-cloudflare-tunnel.sh
+```
+
+This will:
+- Add a route to your Cloudflare Tunnel
+- Create a DNS record
+- Set up Cloudflare Access authentication
+- Configure email-based access policy
+
+### Manual Setup
+
+1. **Update tunnel configuration**
 
 ```yaml
 ingress:
@@ -165,23 +177,16 @@ ingress:
     service: http://vergeos-ai.vergeos-ai.svc.cluster.local:3001
 ```
 
-### 2. Create DNS Record
+2. **Create DNS record**
 
-Create a CNAME record pointing to your tunnel:
-
-```
+```bash
+# CNAME record
 ai.yourdomain.com -> your-tunnel-id.cfargotunnel.com
 ```
 
-### 3. Configure Cloudflare Access (Optional)
+3. **Configure Cloudflare Access**
 
-To require authentication:
-
-1. Go to Cloudflare Zero Trust Dashboard
-2. Access → Applications → Add an application
-3. Select "Self-hosted" and enter your hostname
-4. Create an access policy (e.g., allow specific emails)
-5. Save and test access
+See `CLOUDFLARE-TUNNEL-SETUP.md` for detailed instructions.
 
 ## 📁 Project Structure
 
@@ -195,6 +200,7 @@ vergeos-ai-interface/
 │   └── app.js                # Frontend JavaScript
 ├── k8s-deployment.yaml       # Kubernetes manifests
 ├── deploy.sh                 # Deployment automation
+├── setup-cloudflare-tunnel.sh # Cloudflare setup
 ├── package.json              # Node.js dependencies
 ├── .env.example              # Environment template
 └── README.md                 # This file
