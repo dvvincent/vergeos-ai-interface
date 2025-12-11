@@ -29,7 +29,8 @@ kubectl create configmap vergeos-ai-public \
     --dry-run=client -o yaml | kubectl apply -f -
 
 echo -e "${BLUE}→${NC} Copying TLS secret from default namespace..."
-kubectl get secret happynoises-wildcard-tls -n default -o yaml | \
+# Replace 'your-wildcard-tls' with your actual TLS secret name
+kubectl get secret your-wildcard-tls -n default -o yaml | \
     sed 's/namespace: default/namespace: vergeos-ai/' | \
     kubectl apply -f -
 
@@ -46,7 +47,7 @@ echo "=========================================="
 echo "Access Information"
 echo "=========================================="
 echo ""
-echo "URL: https://vergeos-ai.happynoises.work"
+echo "URL: https://vergeos-ai.YOUR_DOMAIN.com"
 echo ""
 echo "To view logs:"
 echo "  kubectl logs -f -n vergeos-ai -l app=vergeos-ai"

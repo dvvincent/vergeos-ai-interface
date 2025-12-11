@@ -60,7 +60,7 @@ This project provides a modern web interface for VergeOS's new AI capabilities (
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/vergeos-ai-interface.git
+git clone https://github.com/dvvincent/vergeos-ai-interface.git
 cd vergeos-ai-interface
 ```
 
@@ -223,20 +223,6 @@ vergeos-ai-interface/
 
 - **SmolM3** - Compact, efficient model for general tasks
 - **qwen3-coder-14B** - 14B parameter model specialized for coding
-
-## 🎨 Screenshots
-
-### Chat Interface
-
-![Chat Interface](docs/screenshots/chat-interface.png)
-
-### Streaming Responses
-
-![Streaming](docs/screenshots/streaming.png)
-
-### Code Highlighting
-
-![Code Highlighting](docs/screenshots/code-highlighting.png)
 
 ## 📊 Monitoring
 

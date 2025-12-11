@@ -12,8 +12,10 @@ metadata:
   namespace: vergeos-ai
 type: Opaque
 stringData:
-  VERGEOS_BASE_URL: "https://192.168.1.111/v1"
-  VERGEOS_API_KEY: "tLZ-nMETiunOeTK-_upVrSwMZp0L7DUhoaTYNBwFLeU"
+  # Replace with your VergeOS endpoint (e.g., https://192.168.1.100/v1)
+  VERGEOS_BASE_URL: "https://YOUR_VERGEOS_IP/v1"
+  # Replace YOUR_VERGEOS_API_KEY_HERE with your actual VergeOS API key
+  VERGEOS_API_KEY: "YOUR_VERGEOS_API_KEY_HERE"
   VERGEOS_MODEL: "SmolM3"
   PORT: "3001"
   NODE_ENV: "production"
@@ -280,10 +282,12 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`vergeos-ai.happynoises.work`)
+    # Replace with your domain
+    - match: Host(`vergeos-ai.YOUR_DOMAIN.com`)
       kind: Rule
       services:
         - name: vergeos-ai
           port: 3001
   tls:
-    secretName: happynoises-wildcard-tls
+    # Replace with your TLS secret name
+    secretName: your-wildcard-tls

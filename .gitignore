@@ -27,9 +27,6 @@ tmp/
 temp/
 *.tmp
 
-# Kubernetes generated files
-k8s-public-configmap.yaml
-
 # Backup files
 *.bak
 *.backup
