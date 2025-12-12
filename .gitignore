@@ -30,3 +30,16 @@ temp/
 # Backup files
 *.bak
 *.backup
+
+# Credentials and secrets
+*.pem
+*.key
+*.crt
+credentials.json
+*-credentials.json
+*.tfvars
+secrets.yaml
+secrets.yml
+
+# Internal docs
+BLOG-POST.md
