@@ -222,7 +222,6 @@ vergeos-ai-interface/
 ### Available Models
 
 - **SmolM3** - Compact, efficient model for general tasks
-- **qwen3-coder-14B** - 14B parameter model specialized for coding
 
 ## 📊 Monitoring
 
@@ -268,7 +267,6 @@ See `KUBERNETES-DEPLOYMENT.md` for detailed troubleshooting.
 - [Kubernetes Deployment Guide](KUBERNETES-DEPLOYMENT.md)
 - [Cloudflare Tunnel Setup](CLOUDFLARE-TUNNEL-SETUP.md)
 - [Project Summary](PROJECT-SUMMARY.md)
-- [Blog Post](BLOG-POST.md)
 
 ## 🤝 Contributing
 
